@@ -55,7 +55,7 @@
     "@nestjs-cls/transactional": "*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
-    "@nestjs/swagger": "^11.4.6",
+    "@nestjs/swagger": "^11.4.7",
     "better-sqlite3": "*",
     "class-validator": "^0.15.1",
     "drizzle-orm": ">=0.30.0 <2.0.0 || >=1.0.0-rc.1 <2.0.0",
@@ -92,8 +92,8 @@
     }
   },
   "devDependencies": {
-    "@nestjs/common": "^11.1.28",
-    "@nestjs/core": "^11.1.28",
+    "@nestjs/common": "^11.2.1",
+    "@nestjs/core": "^11.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typescript": "^6.0.3"
