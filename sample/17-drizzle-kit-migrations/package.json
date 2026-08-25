@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "@nest-native/drizzle": "0.4.0",
-    "@nestjs/common": "11.1.28",
-    "@nestjs/core": "11.1.28",
-    "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/common": "11.2.1",
+    "@nestjs/core": "11.2.1",
+    "@nestjs/platform-express": "^11.2.1",
     "better-sqlite3": "^12.11.1",
     "drizzle-orm": "^0.45.2",
     "reflect-metadata": "0.2.2",
