@@ -55,7 +55,7 @@ native integration surface:
 
 | Runtime | Supported line |
 | --- | --- |
-| Node.js | `>=20` |
+| Node.js | `>=22` |
 | NestJS | `11.x` |
 | Drizzle ORM | `>=0.30.0 <2.0.0` stable · v1 RC core support since `0.4.0` |
 | Transaction bridge | `@nestjs-cls/transactional`, optional |
@@ -329,7 +329,7 @@ transactions, migrations, or driver-specific assumptions. See
 The repository starts with the same review posture as `nest-trpc-native` while
 using `node:test` and `c8` for this package:
 
-- package build, typecheck, and coverage on Node.js 20 and 22
+- package build, typecheck, and coverage on Node.js 22 and 24
 - coverage with `c8`, enforced at 100% for statements, branches, functions, and lines
 - sticky PR comments for coverage, test performance, and cognitive complexity
 - cognitive complexity enforcement with SonarJS threshold `15`

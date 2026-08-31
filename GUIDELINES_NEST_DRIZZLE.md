@@ -14,7 +14,7 @@ ORM's functional, SQL-first, anti-magic nature**.
 - Mirror the DX of `@nestjs/typeorm` and `@nestjs/graphql` while preserving
   Drizzle's explicit functional style.
 - Current stabilization support line:
-  - Node.js `>=20`
+  - Node.js `>=22`
   - NestJS `11.x`
   - Drizzle ORM `>=0.30.0 <2.0.0` stable; v1 RC (`>=1.0.0-rc.1`) core support
     since 0.4.0, canary-guarded until GA
