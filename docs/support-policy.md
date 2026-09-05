@@ -7,7 +7,7 @@ or Drizzle ORM status.
 
 | Runtime | Supported line |
 | --- | --- |
-| Node.js | `>=20` |
+| Node.js | `>=22` |
 | NestJS | `11.x` |
 | Drizzle ORM | `>=0.30.0 <2.0.0` stable · `>=1.0.0-rc.1 <2.0.0` (core, see below) |
 | TypeScript | Current project compiler line |

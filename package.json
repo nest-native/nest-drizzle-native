@@ -42,7 +42,7 @@
     "security:audit:docs:soft": "npm run security:audit:docs || node -e \"console.log('\\\\n[non-blocking] Docs-site advisories reported above. They live in the website/ tree, which is never published to consumers, so per the guidelines they do not gate releases \u2014 Dependabot tracks them.')\""
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scarfSettings": {
     "enabled": false

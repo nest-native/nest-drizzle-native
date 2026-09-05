@@ -18,7 +18,7 @@ The gate currently requires 100% statements, branches, functions, and lines.
 The PR coverage comment compares the pull request against cached base-branch
 coverage when base data is available.
 
-CI runs package coverage on Node.js 20 and Node.js 22. The Node.js 22 quality
+CI runs package coverage on Node.js 22 and Node.js 24. The Node.js 22 quality
 job owns PR coverage, performance, and cognitive complexity comments so those
 reports stay single-source and easy to read.
 
