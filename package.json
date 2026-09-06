@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build --workspace @nest-native/drizzle && npm run typecheck --workspaces --if-present",
     "test": "TS_NODE_PROJECT=tsconfig.spec.json node --require ts-node/register --require reflect-metadata --test packages/drizzle/test/*.spec.ts",
     "test:report": "node scripts/run-node-test-report.cjs",
     "test:cov": "c8 --all --include \"packages/drizzle/**/*.ts\" --exclude \"packages/drizzle/test/**\" --exclude \"packages/drizzle/interfaces.ts\" --exclude \"packages/drizzle/index.ts\" --exclude \"**/*.d.ts\" --exclude \"**/dist/**\" --reporter text --reporter text-summary --reporter json-summary --reporter lcov --check-coverage --branches 100 --functions 100 --lines 100 --statements 100 npm run test:report",
