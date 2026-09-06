@@ -7,10 +7,17 @@ or Drizzle ORM status.
 
 | Runtime | Supported line |
 | --- | --- |
-| Node.js | `>=22` |
-| NestJS | `11.x` |
+| Node.js | `>=22` (`>=22.12` with NestJS 12 — see the note below the table) |
+| NestJS | `^11.0.0 \|\| ^12.0.0` |
 | Drizzle ORM | `>=0.30.0 <2.0.0` stable · `>=1.0.0-rc.1 <2.0.0` (core, see below) |
 | TypeScript | Current project compiler line |
+
+The Node.js floor depends on which end of the NestJS range you are on. NestJS
+11 runs on any Node.js `>=22`. NestJS 12 is ESM-only; loading it from CommonJS
+code (this package, and every sample) goes through Node's `require(esm)`, which
+is behind a flag before Node.js 22.12.0, so NestJS 12 needs Node.js `>=22.12`.
+`engines` stays `>=22` because the 11 end does not need more; CI's NestJS 12
+leg runs on a current 22.x.
 
 Drivers are optional peers. Install and test the driver your application uses.
 
@@ -55,6 +62,45 @@ record → relations) and removes the positional-client init overloads — use t
 unified `drizzle({ client })` form, which works on `0.32+` and v1 alike. When
 v1 goes GA and the CLS adapter ships v1 support, this policy drops the RC
 caveats; the peer range already covers `1.x`.
+
+### NestJS 12
+
+NestJS 12 is supported on the same peer range as 11: `^11.0.0 || ^12.0.0` on
+`@nestjs/common` and `@nestjs/core`, and `^11.4.7 || ^12.0.0` on the optional
+`@nestjs/swagger` peer. Package versions up to `0.4.0` declare `^11.0.0` and
+npm refuses to install them next to 12; use a release whose peer range admits
+12 (see the changelog).
+
+Nothing in the package had to change. NestJS 12 is ESM-only with an exports
+map, under which a deep import of a *directory* (`@nestjs/common/interfaces`)
+no longer resolves; this package imports only the public `@nestjs/*` entry
+points, and a test keeps it that way. The `NestJS 12 compatibility` CI job
+installs 12 on top of the 11.x lockfile in every workspace, proves each
+workspace resolves 12, and re-runs the package suite (real PostgreSQL and
+MySQL included), the build, and the whole sample matrix on every push. The
+devDependencies and lockfile stay on 11.x, so both ends of the range are
+tested rather than assumed.
+
+When adopting 12:
+
+- **Transaction bridge.** `nestjs-cls@6.2.x` and `@nestjs-cls/transactional@3.2.x`
+  peer-pin `@nestjs/*` to `< 12`. Use `nestjs-cls@^6.3.0`,
+  `@nestjs-cls/transactional@^3.3.0`, and
+  `@nestjs-cls/transactional-adapter-drizzle-orm@^1.5.0`, which admit 12 — all
+  minor releases inside the ranges this repository already declares.
+- **Lifecycle hooks.** NestJS 12 orders each lifecycle hook by the component's
+  level in the module hierarchy, so two providers can see the *same* hook in a
+  different order than on 11. The phase order is unchanged (every
+  `onModuleInit` still completes before any `onApplicationBootstrap`). This
+  package's only hook, `DrizzleConnectionManager.onModuleDestroy`, closes the
+  clients the module owns and depends on no other provider's hook; do not
+  write application code that assumes a cross-provider order within a phase.
+- **Node.js floor.** NestJS 12 is ESM-only, so CommonJS code — this package,
+  the `ts-node` samples — loads it through `require(esm)`, which is behind a
+  flag before Node.js 22.12.0 (and 20.19.0 on the 20 line, which this package
+  no longer supports). The 12 end of the range therefore needs Node.js
+  `>=22.12`: Node 22.0–22.11 cannot load NestJS 12 that way. `engines` stays
+  `>=22` because the 11 end does not need more.
 
 ## Public API Tiers
 

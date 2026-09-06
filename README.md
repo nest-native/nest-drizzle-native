@@ -55,8 +55,8 @@ native integration surface:
 
 | Runtime | Supported line |
 | --- | --- |
-| Node.js | `>=22` |
-| NestJS | `11.x` |
+| Node.js | `>=22` (`>=22.12` with NestJS 12 — see the NestJS 12 note below) |
+| NestJS | `^11.0.0 \|\| ^12.0.0` |
 | Drizzle ORM | `>=0.30.0 <2.0.0` stable · v1 RC core support since `0.4.0` |
 | Transaction bridge | `@nestjs-cls/transactional`, optional |
 | Drivers | Bring the Drizzle driver your app uses |
@@ -71,6 +71,17 @@ CLS-adapter transaction. The whole path is now unblocked upstream:
 no npm override is needed, and the Drizzle-Zod path is already solved — it
 moved into drizzle-orm as `drizzle-orm/zod`, and the canary smokes it. Details:
 [Drizzle ORM v1 (release candidate)](website/docs/support-policy.md#drizzle-orm-v1-release-candidate).
+
+NestJS 12 (ESM-only) is supported on the same peer range as 11. The package
+imports only the public `@nestjs/*` entry points — a test keeps it that way —
+and a dedicated CI leg runs the whole package suite and sample matrix on 12.
+The Node.js floor depends on which end of that range you are on: NestJS 11
+runs on any Node.js `>=22`, while NestJS 12 is loaded from CommonJS code (this
+package, the samples) through Node's `require(esm)`, which is behind a flag
+before Node.js 22.12.0 — so the 12 end needs Node.js `>=22.12`. `engines`
+stays `>=22` because the 11 end does not need more. Details, including the
+`nestjs-cls` line the transaction bridge needs on 12:
+[NestJS 12](website/docs/support-policy.md#nestjs-12).
 
 For peer dependency policy and API stability, see
 [website/docs/support-policy.md](website/docs/support-policy.md).
@@ -330,6 +341,10 @@ The repository starts with the same review posture as `nest-trpc-native` while
 using `node:test` and `c8` for this package:
 
 - package build, typecheck, and coverage on Node.js 22 and 24
+- NestJS 12 compatibility leg: installs `@nestjs/*` 12 on top of the 11.x
+  lockfile in every workspace, proves each workspace resolves 12, and re-runs
+  the package suite, build, and sample matrix, so both ends of the peer range
+  are tested
 - coverage with `c8`, enforced at 100% for statements, branches, functions, and lines
 - sticky PR comments for coverage, test performance, and cognitive complexity
 - cognitive complexity enforcement with SonarJS threshold `15`

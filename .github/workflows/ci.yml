@@ -416,3 +416,101 @@ jobs:
 
       - name: Run package tests against drizzle-orm v1 RC
         run: npm run test
+
+  nestjs-latest-major:
+    name: NestJS 12 compatibility (Node 22)
+    runs-on: ubuntu-latest
+    # The published peer range admits @nestjs/* ^11 || ^12, but the
+    # devDependencies and the lockfile every other job installs stay on 11.x so
+    # the default suite keeps testing the older end. This leg installs 12 on top
+    # of that lockfile with --no-save and re-runs the package suite (gated
+    # driver specs included), the build, and the sample matrix, which makes the
+    # 12 end of the range a tested claim rather than an assumption.
+    # --workspaces matters: the samples pin @nestjs/* to an exact 11.x, and a
+    # root-only install would leave them a nested 11 while the root moved to 12.
+    # The nestjs-cls line rides along because 6.2.x peer-pins @nestjs/* to
+    # `< 12`; 6.3.0 / transactional 3.3.0 / adapter 1.5.0 admit 12 and sit
+    # inside the declared caret ranges, so that part is a within-range overlay,
+    # not a second major.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: drizzle
+          POSTGRES_PASSWORD: drizzle
+          POSTGRES_USER: drizzle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U drizzle -d drizzle"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: drizzle
+          MYSQL_PASSWORD: drizzle
+          MYSQL_ROOT_PASSWORD: drizzle_root
+          MYSQL_USER: drizzle
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pdrizzle_root"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install NestJS 12 (this job only, never saved)
+        run: |
+          npm install --no-save --workspaces --include-workspace-root \
+            @nestjs/common@^12.0.0 \
+            @nestjs/core@^12.0.0 \
+            @nestjs/platform-express@^12.0.0 \
+            @nestjs/swagger@^12.0.0 \
+            @nestjs/testing@^12.0.0 \
+            nestjs-cls@^6.3.0 \
+            @nestjs-cls/transactional@^3.3.0 \
+            @nestjs-cls/transactional-adapter-drizzle-orm@^1.5.0
+
+      - name: Prove the package and every sample resolve NestJS 12
+        # NestJS 12 does not export ./package.json, so the version is read next
+        # to the resolved entry point, from inside each workspace directory.
+        run: |
+          for dir in packages/drizzle sample/*/; do
+            (
+              cd "$dir" && node -e "
+                const path = require('node:path');
+                const root = path.dirname(require.resolve('@nestjs/core'));
+                const { version } = require(path.join(root, 'package.json'));
+                console.log(process.cwd(), '@nestjs/core', version, '<-', root);
+                if (!version.startsWith('12.')) process.exit(1);
+              "
+            )
+          done
+
+      - name: Typecheck and build the package against NestJS 12
+        run: |
+          npm run typecheck --workspace @nest-native/drizzle
+          npm run build --workspace @nest-native/drizzle
+
+      - name: Run the package suite against NestJS 12
+        env:
+          NEST_DRIZZLE_NATIVE_MYSQL_URL: mysql://drizzle:drizzle@127.0.0.1:3306/drizzle
+          NEST_DRIZZLE_NATIVE_POSTGRES_URL: postgresql://drizzle:drizzle@127.0.0.1:5432/drizzle
+        run: npm test
+
+      - name: Run the sample matrix against NestJS 12
+        env:
+          NEST_DRIZZLE_NATIVE_MYSQL_URL: mysql://drizzle:drizzle@127.0.0.1:3306/drizzle
+          NEST_DRIZZLE_NATIVE_POSTGRES_URL: postgresql://drizzle:drizzle@127.0.0.1:5432/drizzle
+        run: npm run ci:sample

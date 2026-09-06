@@ -8,6 +8,26 @@ package release is useful for users.
 
 ## Unreleased
 
+- **NestJS 12 is supported.** The `@nestjs/common` and `@nestjs/core` peer
+  ranges widen from `^11.0.0` to `^11.0.0 || ^12.0.0`, and the optional
+  `@nestjs/swagger` peer from `^11.4.7` to `^11.4.7 || ^12.0.0` — that last
+  one was the actual blocker: it pulled Swagger 11, which peers on
+  `@nestjs/common` `^11`, so a 12 install failed in npm's resolver before any
+  code ran. No package code changed. NestJS 12 is ESM-only with an exports
+  map, under which a directory import such as `@nestjs/common/interfaces` no
+  longer resolves; this package makes none (it imports only the public
+  `@nestjs/*` roots), and a new test keeps it that way. A dedicated CI leg
+  installs 12 on top of the 11.x lockfile in every workspace and re-runs the
+  package suite (real PostgreSQL/MySQL included), the build, and the sample
+  matrix, so both ends of the range are tested; the devDependencies stay on
+  11.x. The 12 end of the range needs Node.js `>=22.12`, where `require(esm)`
+  is no longer behind a flag; `engines` stays `>=22` because the 11 end does
+  not need more. On 12 the transaction bridge needs `nestjs-cls@^6.3.0`,
+  `@nestjs-cls/transactional@^3.3.0`, and
+  `@nestjs-cls/transactional-adapter-drizzle-orm@^1.5.0` (older lines
+  peer-pin `@nestjs/*` to `< 12`). NestJS 12 also reordered lifecycle hooks
+  across providers; `DrizzleConnectionManager.onModuleDestroy` depends on no
+  other provider's hook.
 - **`describeDrizzleError(error)`** — the structured view of a constraint
   violation: `{ kind, code, table?, constraint?, column?, detail? }`, or
   `undefined` when the error is not one. `mapDrizzleError` tells you *which

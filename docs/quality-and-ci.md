@@ -91,6 +91,20 @@ The package coverage jobs and the `Sample validation` job both receive
 workflow-generated PostgreSQL and MySQL URLs. Those URLs are test-only and must
 not be copied into docs, samples, or logs beyond generic matrix summaries.
 
+## Peer-Major Compatibility Legs
+
+The lockfile keeps each peer's devDependency on the oldest supported major, so
+the main jobs test that end of every range. Two extra jobs cover the other end:
+
+| Job | What it installs | Blocking |
+| --- | --- | --- |
+| `NestJS 12 compatibility (Node 22)` | `@nestjs/*` 12 (plus the `nestjs-cls` 6.3 line, which is the first to admit 12) on top of the 11.x lockfile, in every workspace, with `--no-save`; asserts each workspace resolves 12, then re-runs the package suite with the driver services, the build, and the sample matrix | Yes |
+| `drizzle-orm v1 RC compatibility` | `drizzle-orm@rc` on top of the stable lockfile | No (informational) |
+
+To reproduce the NestJS 12 leg locally, run the job's `npm install --no-save ...`
+line from `.github/workflows/ci.yml`, then `npm test` and `npm run ci:sample`;
+`npm ci` restores the lockfile state afterwards.
+
 ## Release And Security
 
 Release validation checks README/docs links, the package tarball, and a
