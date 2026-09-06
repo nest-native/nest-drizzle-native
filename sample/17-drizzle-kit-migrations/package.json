@@ -15,7 +15,7 @@
     "enabled": false
   },
   "dependencies": {
-    "@nest-native/drizzle": "0.4.0",
+    "@nest-native/drizzle": "0.5.0",
     "@nestjs/common": "11.2.1",
     "@nestjs/core": "11.2.1",
     "@nestjs/platform-express": "^11.2.1",
