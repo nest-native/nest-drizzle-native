@@ -15,7 +15,8 @@ ORM's functional, SQL-first, anti-magic nature**.
   Drizzle's explicit functional style.
 - Current stabilization support line:
   - Node.js `>=22`
-  - NestJS `11.x`
+  - NestJS `^11.0.0 || ^12.0.0` (the published peer range; devDependencies
+    and the lockfile stay on 11.x — see the NestJS-major decisions in §12)
   - Drizzle ORM `>=0.30.0 <2.0.0` stable; v1 RC (`>=1.0.0-rc.1`) core support
     since 0.4.0, canary-guarded until GA
   - PostgreSQL, MySQL, SQLite, and libSQL-compatible drivers (`pg`, `mysql2`,
@@ -260,6 +261,56 @@ project constitution.
   samples from `sample/*/package.json`. New focused sample PRs should not need
   to edit the root script manually; keep explicit workspace commands only in
   human-facing docs for targeted debugging.
+- **NestJS majors are adopted by widening the peer range; the `@nestjs/*`
+  devDependencies stay on the older major.** NestJS 12 (2026-08) was added
+  as `^11.0.0 || ^12.0.0` on `@nestjs/common` and `@nestjs/core` and
+  `^11.4.7 || ^12.0.0` on the optional `@nestjs/swagger` peer (that one was
+  the actual 12 blocker: it pulled Swagger 11, which peers on common `^11`),
+  with the devDependencies and the lockfile left on 11.x and a
+  `nestjs-latest-major` CI leg that installs 12 on top of that lockfile
+  (`npm install --no-save --workspaces --include-workspace-root`, because the
+  samples pin `@nestjs/*` exactly and a root-only install leaves them a
+  nested 11) and runs the package suite with the driver services, the build,
+  and the sample matrix. The leg asserts from inside every workspace that
+  `@nestjs/core` resolves to 12 before it runs anything, so a hoisting
+  accident cannot turn it into a second 11 leg. The `nestjs-cls` 6.3 line
+  rides along in that leg because 6.2.x peer-pins `@nestjs/*` to `< 12`; it
+  is a within-range minor, not a second major. Dependabot cannot deliver a
+  NestJS major: the `@nestjs/*` packages peer on each other, so
+  one-package-per-PR bumps fail `npm ci` with ERESOLVE before a single test
+  runs (NestJS 12 opened fifteen such PRs across the org). The peer group in
+  `.github/dependabot.yml` therefore groups majors too, so the next major
+  arrives as one PR whose result carries information — and even that PR is
+  evidence for the peer-widening recipe above, not a replacement for it.
+- **NestJS 12 is ESM-only: never import a directory index from `@nestjs/*`.**
+  `@nestjs/common` and `@nestjs/core` 12 ship an exports map of
+  `{".", "./internal", "./*.js", "./*": "./*.js"}`. A deep import of a *file*
+  (`@nestjs/core/injector/constants` -> `injector/constants.js`) still
+  resolves under it; a deep import of a *directory*
+  (`@nestjs/common/interfaces`) does not, because there is no `<dir>.js` and
+  ESM never completes a directory to its `index`. On the 11.x install the
+  trap is invisible — CommonJS resolves the directory happily — which is why
+  it is enforced rather than remembered: `test/nestjs-deep-imports.spec.ts`
+  scans every `@nestjs/<pkg>/<subpath>` import under `packages/drizzle` and
+  requires the subpath to name a file (`.js` / `.ts` / `.d.ts`) inside the
+  installed package, on whichever major is installed. This package imports
+  only the public roots today; keep it that way, and if an internal is ever
+  truly needed, import the file that declares it or declare a local alias —
+  never `@nestjs/common/interfaces/...`, which is still an internal path.
+- **Lifecycle-hook order across providers is not a contract.** NestJS 12
+  reordered lifecycle hooks (`onModuleInit`, `onApplicationBootstrap`,
+  `onModuleDestroy`, `beforeApplicationShutdown`, `onApplicationShutdown`)
+  by the component's level in the module hierarchy, so the order in which
+  two providers see the *same* hook differs between 11 and 12. The phase
+  order did not change — every `onModuleInit` still completes before any
+  `onApplicationBootstrap`. This package's only hook is
+  `DrizzleConnectionManager.onModuleDestroy`, which closes the clients the
+  module owns and depends on no other provider's hook. Nothing here assumes
+  an order among providers within a phase, and nothing may start to: a
+  change that needs another provider's same-phase hook to have run first
+  must express that as a dependency (inject it, or move the work to an
+  earlier phase), never as an assumption about hook sequencing. No test
+  asserts a within-phase hook order, and none should.
 
 ## Local Full-Mode Verification (optional infra + mutation testing)
 
