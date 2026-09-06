@@ -37,8 +37,8 @@ jobs:
       - name: Typecheck package
         run: npm run typecheck --workspace @nest-native/drizzle
 
-  package-test-node-20:
-    name: Package tests/coverage (Node 20)
+  package-test-node-22:
+    name: Package tests/coverage (Node 22)
     runs-on: ubuntu-latest
     services:
       postgres:
