@@ -17,18 +17,21 @@ import { describe, it } from 'node:test';
  *
  * This package imports only the public `@nestjs/*` roots today, so this is a
  * tripwire rather than a fix: it scans every `.ts` file under
- * `packages/drizzle` for `@nestjs/<pkg>/<subpath>` imports and requires
- * `<subpath>` to name a real file (`.js`, `.ts`, or `.d.ts`) inside the
- * installed package, never a directory. The scanner is exercised against a
- * fixture first so an empty scan cannot make the check vacuous. It fails on
+ * `packages/drizzle` for `@nestjs/<pkg>/<subpath>` imports in every form —
+ * `from`, a bare side-effect `import '…'`, `require()`, and `import()` — and
+ * requires `<subpath>` to name a real file (`.js`, `.ts`, or `.d.ts`) inside
+ * the installed package, never a directory. The scanner is exercised against
+ * fixtures first so an empty scan cannot make the check vacuous. It fails on
  * both majors, which matters because on the 11.x install the trap is
  * otherwise invisible.
  */
 const packageDir = path.resolve(__dirname, '..');
 const packageRequire = createRequire(path.join(packageDir, 'index.ts'));
 const IGNORED_DIRECTORIES = new Set(['node_modules', 'dist']);
+// Every way a source file can name a module: `from '…'` (static imports and
+// re-exports), a bare side-effect `import '…'`, `require('…')`, and `import('…')`.
 const DEEP_IMPORT_PATTERN =
-  /(?:\bfrom\s*|\brequire\(\s*|\bimport\(\s*)['"]@nestjs\/([^'"/]+)\/([^'"]+)['"]/g;
+  /\b(?:from|import|require\(|import\()\s*['"]@nestjs\/([^'"/]+)\/([^'"]+)['"]/g;
 
 type Source = readonly [file: string, text: string];
 
@@ -129,6 +132,30 @@ describe('@nestjs/* deep imports', () => {
 
     assert.equal(offenders.length, 1, offenders.join('\n'));
     assert.match(offenders[0], /^@nestjs\/common\/interfaces \(imported by fixture\.ts\) resolves to a DIRECTORY/);
+  });
+
+  it('collects every import form, including a bare side-effect import (scanner self-check)', () => {
+    // A side-effect import has no `from`, so a scanner keyed on `from` alone
+    // would miss it — this fixture keeps that form covered. Built from pieces
+    // for the same reason as above.
+    const directoryImport = ['@nestjs/common', 'interfaces'].join('/');
+    const forms: Source[] = [
+      ['named.ts', `import { Controller } from '${directoryImport}';\n`],
+      ['side-effect.ts', `import '${directoryImport}';\n`],
+      ['side-effect-double-quoted.ts', `import "${directoryImport}";\n`],
+      ['re-export.ts', `export * from '${directoryImport}';\n`],
+      ['require.ts', `const { Controller } = require('${directoryImport}');\n`],
+      ['dynamic.ts', `const loaded = import('${directoryImport}');\n`],
+    ];
+
+    const deepImports = collectDeepImports(forms);
+
+    assert.deepEqual(
+      [...deepImports.entries()],
+      [[directoryImport, forms.map(([file]) => file)]],
+      'every import form must be collected, the bare side-effect form included',
+    );
+    assert.equal(findOffenders(deepImports).length, 1);
   });
 
   it('imports @nestjs/* only through paths that are files inside the installed package', () => {

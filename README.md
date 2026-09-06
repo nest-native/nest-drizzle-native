@@ -55,7 +55,7 @@ native integration surface:
 
 | Runtime | Supported line |
 | --- | --- |
-| Node.js | `>=22` |
+| Node.js | `>=22` (`>=22.12` with NestJS 12 — see the NestJS 12 note below) |
 | NestJS | `^11.0.0 \|\| ^12.0.0` |
 | Drizzle ORM | `>=0.30.0 <2.0.0` stable · v1 RC core support since `0.4.0` |
 | Transaction bridge | `@nestjs-cls/transactional`, optional |
@@ -75,7 +75,12 @@ moved into drizzle-orm as `drizzle-orm/zod`, and the canary smokes it. Details:
 NestJS 12 (ESM-only) is supported on the same peer range as 11. The package
 imports only the public `@nestjs/*` entry points — a test keeps it that way —
 and a dedicated CI leg runs the whole package suite and sample matrix on 12.
-Details, including the `nestjs-cls` line the transaction bridge needs on 12:
+The Node.js floor depends on which end of that range you are on: NestJS 11
+runs on any Node.js `>=22`, while NestJS 12 is loaded from CommonJS code (this
+package, the samples) through Node's `require(esm)`, which is behind a flag
+before Node.js 22.12.0 — so the 12 end needs Node.js `>=22.12`. `engines`
+stays `>=22` because the 11 end does not need more. Details, including the
+`nestjs-cls` line the transaction bridge needs on 12:
 [NestJS 12](website/docs/support-policy.md#nestjs-12).
 
 For peer dependency policy and API stability, see

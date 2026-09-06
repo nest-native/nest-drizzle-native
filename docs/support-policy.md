@@ -7,10 +7,17 @@ or Drizzle ORM status.
 
 | Runtime | Supported line |
 | --- | --- |
-| Node.js | `>=22` |
+| Node.js | `>=22` (`>=22.12` with NestJS 12 — see the note below the table) |
 | NestJS | `^11.0.0 \|\| ^12.0.0` |
 | Drizzle ORM | `>=0.30.0 <2.0.0` stable · `>=1.0.0-rc.1 <2.0.0` (core, see below) |
 | TypeScript | Current project compiler line |
+
+The Node.js floor depends on which end of the NestJS range you are on. NestJS
+11 runs on any Node.js `>=22`. NestJS 12 is ESM-only; loading it from CommonJS
+code (this package, and every sample) goes through Node's `require(esm)`, which
+is behind a flag before Node.js 22.12.0, so NestJS 12 needs Node.js `>=22.12`.
+`engines` stays `>=22` because the 11 end does not need more; CI's NestJS 12
+leg runs on a current 22.x.
 
 Drivers are optional peers. Install and test the driver your application uses.
 
@@ -88,10 +95,12 @@ When adopting 12:
   package's only hook, `DrizzleConnectionManager.onModuleDestroy`, closes the
   clients the module owns and depends on no other provider's hook; do not
   write application code that assumes a cross-provider order within a phase.
-- **Node.js.** NestJS 12 is ESM-only, so CommonJS code — this package, the
-  `ts-node` samples — loads it through `require(esm)`, which is unflagged from
-  Node `20.19` / `22.12`. This package's `>=22` line is unchanged, but Node
-  22.0–22.11 cannot load NestJS 12 that way.
+- **Node.js floor.** NestJS 12 is ESM-only, so CommonJS code — this package,
+  the `ts-node` samples — loads it through `require(esm)`, which is behind a
+  flag before Node.js 22.12.0 (and 20.19.0 on the 20 line, which this package
+  no longer supports). The 12 end of the range therefore needs Node.js
+  `>=22.12`: Node 22.0–22.11 cannot load NestJS 12 that way. `engines` stays
+  `>=22` because the 11 end does not need more.
 
 ## Public API Tiers
 

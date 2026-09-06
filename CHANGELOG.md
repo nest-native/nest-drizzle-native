@@ -20,7 +20,9 @@ package release is useful for users.
   installs 12 on top of the 11.x lockfile in every workspace and re-runs the
   package suite (real PostgreSQL/MySQL included), the build, and the sample
   matrix, so both ends of the range are tested; the devDependencies stay on
-  11.x. On 12 the transaction bridge needs `nestjs-cls@^6.3.0`,
+  11.x. The 12 end of the range needs Node.js `>=22.12`, where `require(esm)`
+  is no longer behind a flag; `engines` stays `>=22` because the 11 end does
+  not need more. On 12 the transaction bridge needs `nestjs-cls@^6.3.0`,
   `@nestjs-cls/transactional@^3.3.0`, and
   `@nestjs-cls/transactional-adapter-drizzle-orm@^1.5.0` (older lines
   peer-pin `@nestjs/*` to `< 12`). NestJS 12 also reordered lifecycle hooks
